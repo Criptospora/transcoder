@@ -1,0 +1,6 @@
+- Maybe change most of the relative pathing operations to os.chdir()
+- Add more target formats
+- Add try excepts on os.rmdir, shutil.move, shutil.copytree... make code more solid
+- Add target directory options
+- Add possibility to select bitrate
+- Optimize cleaning process
