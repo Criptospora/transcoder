@@ -93,7 +93,7 @@ if __name__ == '__main__':
     files = get_filequeue()
     
     # iterate the queue and encode each file
-    logging.info('Passing orders to the transcoding slaves...')
+    logging.info('Passing orders to the transcoding workers...')
     pool = multiprocessing.Pool() # create a pool of workers
     t0 = time.perf_counter()
     pool.starmap(opusenc, files) # iterate 'files' and use the pool to encode them
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         if tgtdir not in dirtyfolders:
             dirtyfolders.append(tgtdir)
     for dirtyfolder in dirtyfolders:
-        #TODO: potential of optimization. Calling them both walks the folder twice
+        #TODO: potential for optimization. Calling them both walks the folder twice
         cleanup(dirtyfolder)
         renamedirs(dirtyfolder, formatRegex, 'Opus 128')
     logging.info('DONE!')
