@@ -1,7 +1,5 @@
 #! Python3
 # This script transcodes files passed as arguments into OPUS
-# KNOWN BUGS: The parent directory path must NOT contain FLAC or WAV in it.
-# Also, if 
 
 import os, sys, logging, multiprocessing, time, shutil, re
 
@@ -10,14 +8,21 @@ logging.disable(logging.DEBUG)
 #logging.disable(logging.CRITICAL)
 
 def renamedirs(directory, formatRegex, tgtformat): # Renames folders accordingly
-    for path, subfolders, files in os.walk(directory):
-        newpath = re.sub(r'\s*(\d\d-\d\d\d?)\s*', '', path) # Deletes bitdepth and sample rate (POSSIBLE BUGS if album or band contain numbers!)
-        newpath = formatRegex.sub(tgtformat, newpath) # Changes format name
-        if newpath != path:
-            logging.debug('Moving %s to %s' % (path, newpath))
-            shutil.move(path, newpath) # Renames. BUG: If parent path has FLAC in it, it will mess up
+    for path, subfolders, files in os.walk(directory, topdown=False):
+        if path == directory: # Skips parent folder
+            logging.debug("skipping: %s" % path)
+        else:
+            relpath = os.path.relpath(path, directory) # So the namechanging only happens on the relative path
+            newrelpath = re.sub(r'\s*(\d\d-\d\d\d?)\s*', '', relpath) # Deletes bitdepth and sample rate (POSSIBLE BUGS if album or band contain numbers!)
+            newrelpath = formatRegex.sub(tgtformat, newrelpath) # Changes format name
+            logging.debug('relpath is %s' % relpath)
+            logging.debug('newrelpath is %s' % newrelpath)
+            if newrelpath != relpath:
+                newpath = os.path.join(directory, newrelpath)
+                logging.debug('Moving %s to %s' % (path, newpath))
+                shutil.move(path, newpath) # Renames. Might leave behind empty folders
 
-def cleanup(directory): # Deletes empty folders and renames the others
+def cleanup(directory): # Deletes empty folders
     for path, subfolders, files in os.walk(directory, topdown=False):
         if subfolders == [] and files == []: #folder is empty
             os.rmdir(path)
@@ -110,6 +115,6 @@ if __name__ == '__main__':
             dirtyfolders.append(tgtdir)
     for dirtyfolder in dirtyfolders:
         #TODO: potential for optimization. Calling them both walks the folder twice
-        cleanup(dirtyfolder)
         renamedirs(dirtyfolder, formatRegex, 'Opus 128')
+        cleanup(dirtyfolder)
     logging.info('DONE!')
